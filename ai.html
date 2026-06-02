@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI 錬金術師：融合の法則</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts & Font Awesome -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght=500;700;900&family=Noto+Sans+JP:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background: radial-gradient(circle at center, #110c22 0%, #050209 100%);
+            overflow-x: hidden;
+            touch-action: manipulation;
+        }
+        .font-mystic {
+            font-family: 'Cinzel', serif;
+        }
+        /* 錬金術ルーンのネオン効果 */
+        .rune-glow {
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4), inset 0 0 15px rgba(168, 85, 247, 0.2);
+            border-color: rgba(168, 85, 247, 0.6);
+        }
+        .fever-glow {
+            animation: fever-pulse 1.5s infinite alternate;
+        }
+        @keyframes fever-pulse {
+            0% { box-shadow: 0 0 10px #f43f5e, inset 0 0 10px #f43f5e; }
+            100% { box-shadow: 0 0 25px #fb923c, inset 0 0 20px #fb923c; }
+        }
+        /* パーティクルエフェクト用コンテナ */
+        #particleContainer {
+            pointer-events: none;
+            position: absolute;
+            inset: 0;
+            z-index: 5;
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: fade-up 0.8s ease-out forwards;
+        }
+        @keyframes fade-up {
+            0% {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(-50px) scale(0.2);
+                opacity: 0;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen text-purple-100 flex flex-col items-center justify-between p-2 md:p-4">
+
+    <!-- ゲームヘッダー -->
+    <header class="w-full max-w-lg text-center py-2 flex justify-between items-center px-4">
+        <div>
+            <h1 class="text-xl md:text-2xl font-black font-mystic text-purple-400 tracking-widest">
+                ALCHEMIST
+            </h1>
+            <p class="text-[10px] text-purple-300/60 uppercase tracking-widest font-mystic">Fusion Grid</p>
+        </div>
+        <div class="flex gap-2">
+            <button id="helpBtn" class="bg-purple-950/60 hover:bg-purple-900 border border-purple-800 text-purple-300 p-2 rounded-lg transition-all">
+                <i class="fas fa-question-circle"></i>
+            </button>
+            <button id="soundBtn" class="bg-purple-950/60 hover:bg-purple-900 border border-purple-800 text-purple-300 p-2 rounded-lg transition-all">
+                <i id="soundIcon" class="fas fa-volume-up"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="w-full max-w-lg flex flex-col flex-grow justify-center gap-3 px-2">
+        
+        <!-- ゲームステータスバー -->
+        <div class="grid grid-cols-3 gap-2 text-center">
+            <div class="bg-purple-950/40 border border-purple-900/60 rounded-xl p-2">
+                <span class="text-[10px] font-bold text-purple-400 block tracking-widest">SCORE</span>
+                <span id="scoreVal" class="text-xl font-bold font-mystic text-amber-300">0</span>
+            </div>
+            <div class="bg-purple-950/40 border border-purple-900/60 rounded-xl p-2 relative overflow-hidden">
+                <span class="text-[10px] font-bold text-purple-400 block tracking-widest">FEVER COMBO</span>
+                <span id="comboVal" class="text-xl font-bold font-mystic text-rose-400">0</span>
+                <!-- フィーバーゲージバー -->
+                <div class="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-rose-500 to-amber-400 transition-all duration-300" id="feverBar" style="width: 0%"></div>
+            </div>
+            <div class="bg-purple-950/40 border border-purple-900/60 rounded-xl p-2">
+                <span class="text-[10px] font-bold text-purple-400 block tracking-widest">MYSTIC LEVEL</span>
+                <span id="levelVal" class="text-xl font-bold font-mystic text-cyan-300">1</span>
+            </div>
+        </div>
+
+        <!-- ゲーム盤面エリア -->
+        <div class="flex gap-3 justify-center items-stretch relative">
+            
+            <!-- 左側：レシピサイドバー -->
+            <div class="hidden md:flex flex-col w-28 bg-purple-950/30 border border-purple-900/50 rounded-2xl p-2.5 text-xs justify-between gap-2">
+                <div class="text-center border-b border-purple-900/80 pb-1.5">
+                    <span class="font-mystic font-bold text-purple-300">RECIPES</span>
+                </div>
+                <div class="flex-grow space-y-2 overflow-y-auto max-h-[300px] text-[11px] text-purple-300/80">
+                    <div class="bg-purple-950/60 p-1.5 rounded border border-purple-900/50">
+                        <span class="text-cyan-400 font-bold">💧 水</span> + <span class="text-red-400 font-bold">🔥 火</span><br>→ <span class="text-slate-300 font-bold">💨 蒸気</span>
+                    </div>
+                    <div class="bg-purple-950/60 p-1.5 rounded border border-purple-900/50">
+                        <span class="text-amber-600 font-bold">🧱 土</span> + <span class="text-red-400 font-bold">🔥 火</span><br>→ <span class="text-orange-400 font-bold">🌋 溶岩</span>
+                    </div>
+                    <div class="bg-purple-950/60 p-1.5 rounded border border-purple-900/50">
+                        <span class="text-cyan-400 font-bold">💧 水</span> + <span class="text-amber-600 font-bold">🧱 土</span><br>→ <span class="text-green-400 font-bold">🌱 生命</span>
+                    </div>
+                    <div class="bg-purple-950/60 p-1.5 rounded border border-purple-900/50">
+                        <span class="text-slate-400 font-bold">🌀 空気</span> + <span class="text-orange-400 font-bold">🌋 溶岩</span><br>→ <span class="text-stone-400 font-bold">🪨 石材</span>
+                    </div>
+                    <div class="bg-purple-950/60 p-1.5 rounded border border-purple-900/50">
+                        <span class="text-green-400 font-bold">🌱 生命</span> + <span class="text-stone-400 font-bold">🪨 石材</span><br>→ <span class="text-yellow-400 font-bold">💎 黄金</span>
+                    </div>
+                    <div class="bg-purple-950/60 p-1.5 rounded border border-purple-900/50">
+                        <span class="text-yellow-400 font-bold">💎 黄金</span> + <span class="text-purple-400 font-bold">🔮 魔法</span><br>→ <span class="text-pink-500 font-bold">👑 賢者の石</span>
+                    </div>
+                </div>
+                <div class="text-[10px] text-purple-400/60 text-center">同じ最上位元素を融合すると周辺が大爆発！</div>
+            </div>
+
+            <!-- 中央：メインボード (6行7列) -->
+            <div class="relative bg-purple-950/20 rounded-2xl p-2 rune-glow border-2 flex-grow max-w-[340px]" id="boardContainer">
+                <canvas id="alchCanvas" class="w-full bg-purple-950/50 rounded-xl block"></canvas>
+                <div id="particleContainer"></div>
+
+                <!-- ゲームオーバー / スタート画面オーバーレイ -->
+                <div id="screenOverlay" class="absolute inset-0 bg-black/90 rounded-2xl flex flex-col items-center justify-center text-center p-4 transition-all duration-300 z-20">
+                    <div id="overlayContent" class="space-y-4">
+                        <div class="w-16 h-16 mx-auto bg-purple-500/20 border border-purple-500 rounded-full flex items-center justify-center animate-spin-slow">
+                            <i class="fas fa-dharmachakra text-3xl text-purple-400"></i>
+                        </div>
+                        <h2 id="overlayTitle" class="text-2xl md:text-3xl font-black text-purple-400 font-mystic tracking-widest">
+                            ALCHEMY FUSION
+                        </h2>
+                        <p id="overlayDesc" class="text-purple-300/80 text-xs max-w-[240px] mx-auto leading-relaxed">
+                            元素を落として結合させましょう。<br>
+                            同じ元素を融合させると、より高次元の新しい元素に進化し、強力な連鎖魔法を引き起こします！
+                        </p>
+                        <div id="scoreDisplay" class="hidden">
+                            <p class="text-xs text-purple-400 uppercase tracking-widest">錬金術の栄誉スコア</p>
+                            <p id="finalScore" class="text-3xl font-black font-mystic text-amber-300">0</p>
+                            <p id="discoveredCount" class="text-xs text-purple-300/70 mt-1">発見した元素数: 0</p>
+                        </div>
+                        <button id="startBtn" class="bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold font-mystic py-3 px-8 rounded-full shadow-lg shadow-purple-500/20 hover:scale-105 active:scale-95 transition-all text-sm tracking-wider">
+                            TRANSMUTE START
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右側：NEXT & BEST -->
+            <div class="flex flex-col w-20 md:w-24 gap-3">
+                <div class="bg-purple-950/40 border border-purple-900/60 rounded-2xl p-2 text-center flex flex-col items-center justify-center flex-1">
+                    <span class="text-[10px] font-bold text-purple-400 tracking-wider uppercase block">NEXT</span>
+                    <!-- 次の元素シンボル -->
+                    <div id="nextElementBox" class="w-12 h-12 rounded-xl mt-2 flex items-center justify-center text-2xl border border-purple-800 bg-purple-950/80 shadow-inner">
+                        💧
+                    </div>
+                    <span id="nextElementName" class="text-[10px] text-purple-300 font-bold mt-1 block">水</span>
+                </div>
+                
+                <!-- 最高到達元素 -->
+                <div class="bg-purple-950/40 border border-purple-900/60 rounded-2xl p-2 text-center flex flex-col items-center justify-center flex-1">
+                    <span class="text-[9px] font-bold text-purple-400 tracking-wider uppercase block">BEST ELM</span>
+                    <div id="bestComboIcon" class="w-10 h-10 rounded-full border border-amber-800 bg-amber-950/30 flex items-center justify-center text-lg mt-1.5">
+                        🌱
+                    </div>
+                    <span id="bestComboName" class="text-[10px] text-amber-400 font-bold mt-1">生命</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- 操作パッド -->
+        <div class="w-full bg-purple-950/20 rounded-2xl p-2.5 border border-purple-900/40 max-w-[400px] mx-auto">
+            <div class="grid grid-cols-4 gap-2">
+                <button id="ctrlLeft" class="bg-purple-900/40 hover:bg-purple-800/60 active:bg-purple-700/80 text-purple-200 p-3.5 rounded-xl transition-all flex items-center justify-center">
+                    <i class="fas fa-chevron-left text-lg"></i>
+                </button>
+                <button id="ctrlDrop" class="bg-purple-900/40 hover:bg-purple-800/60 active:bg-purple-700/80 text-purple-200 p-3.5 rounded-xl transition-all flex flex-col items-center justify-center col-span-2">
+                    <i class="fas fa-compress-alt text-lg text-rose-400"></i>
+                    <span class="text-[9px] font-bold text-purple-400 mt-0.5">元素を落下させる</span>
+                </button>
+                <button id="ctrlRight" class="bg-purple-900/40 hover:bg-purple-800/60 active:bg-purple-700/80 text-purple-200 p-3.5 rounded-xl transition-all flex items-center justify-center">
+                    <i class="fas fa-chevron-right text-lg"></i>
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- ヘルプモーダル -->
+    <div id="helpModal" class="fixed inset-0 bg-black/80 flex items-center justify-center p-4 z-50 hidden">
+        <div class="bg-purple-950 border border-purple-700 rounded-2xl max-w-sm w-full p-5 space-y-4">
+            <h3 class="text-lg font-black font-mystic text-purple-300 text-center border-b border-purple-800 pb-2">錬金術の秘伝書</h3>
+            <div class="text-xs space-y-2.5 text-purple-200/90 leading-relaxed max-h-[300px] overflow-y-auto pr-1">
+                <p><strong>🔮 基本ルール:</strong> 元素を一番下に落下させ、縦または横に隣り合わせに並べます。同じ元素が揃うと、さらに高次の物質へと融合・進化します。</p>
+                <div class="bg-purple-900/40 p-2.5 rounded-lg space-y-1 text-[11px]">
+                    <p>• 💧 水 + 🔥 火 = 💨 蒸気 (Lvl 2)</p>
+                    <p>• 🧱 土 + 🔥 火 = 🌋 溶岩 (Lvl 2)</p>
+                    <p>• 💧 水 + 🧱 土 = 🌱 生命 (Lvl 2)</p>
+                    <p>• 🌀 空気 + 🌋 溶岩 = 🪨 石材 (Lvl 3)</p>
+                    <p>• 🌱 生命 + 🪨 石材 = 💎 黄金 (Lvl 4)</p>
+                    <p>• 💎 黄金 + 🔮 魔法 = 👑 賢者の石 (Max)</p>
+                </div>
+                <p><strong>💥 チェインリアクション(連鎖):</strong> 1回の落下で複数の連続融合が起きると、獲得スコアが倍増しフィーバーゲージが急上昇します。</p>
+                <p><strong>⌨️ PC操作キー設定:</strong><br>左右に移動: <kbd class="px-1 bg-purple-900 rounded">←</kbd> <kbd class="px-1 bg-purple-900 rounded">→</kbd> | 落下・融合: <kbd class="px-1 bg-purple-900 rounded">Space</kbd> または <kbd class="px-1 bg-purple-900 rounded">↓</kbd></p>
+            </div>
+            <button id="closeHelpBtn" class="w-full bg-purple-700 hover:bg-purple-600 text-white font-bold py-2 rounded-xl text-xs">秘伝書を閉じる</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 音響制御システム (Web Audio API) ---
+        class AlchAudio {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+            init() {
+                if (!this.ctx) {
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+            }
+            playTone(freq, type, duration, volume = 0.1) {
+                if (this.muted) return;
+                this.init();
+                try {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.type = type;
+                    osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                    gain.gain.setValueAtTime(volume, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + duration);
+                    osc.start();
+                    osc.stop(this.ctx.currentTime + duration);
+                } catch(e){}
+            }
+            playMove() { this.playTone(200, 'triangle', 0.08, 0.15); }
+            playDrop() { this.playTone(150, 'sine', 0.1, 0.2); }
+            playFuse(lvl) {
+                const baseFreq = 261.63; // ド
+                const mults = [1, 1.25, 1.5, 1.875, 2, 2.5, 3];
+                const freq = baseFreq * (mults[lvl] || 1);
+                this.playTone(freq, 'sine', 0.25, 0.25);
+                setTimeout(() => {
+                    this.playTone(freq * 1.5, 'sine', 0.3, 0.15);
+                }, 80);
+            }
+            playFever() {
+                this.playTone(440, 'sawtooth', 0.15, 0.1);
+                setTimeout(() => this.playTone(554, 'sawtooth', 0.15, 0.1), 100);
+                setTimeout(() => this.playTone(659, 'sawtooth', 0.3, 0.15), 200);
+            }
+            playGameOver() {
+                this.playTone(180, 'sawtooth', 0.5, 0.3);
+                setTimeout(() => this.playTone(120, 'sawtooth', 0.8, 0.3), 350);
+            }
+        }
+        const sfx = new AlchAudio();
+
+        // --- 元素図鑑データ ---
+        const ELEMENTS = {
+            1: { name: '水', symbol: '💧', color: '#38bdf8', level: 1 },
+            2: { name: '火', symbol: '🔥', color: '#f87171', level: 1 },
+            3: { name: '土', symbol: '🧱', color: '#b45309', level: 1 },
+            4: { name: '空気', symbol: '🌀', color: '#a7f3d0', level: 1 },
+            5: { name: '魔法', symbol: '🔮', color: '#c084fc', level: 1 },
+            
+            // 融合レベル2
+            6: { name: '蒸気', symbol: '💨', color: '#e2e8f0', level: 2 }, 
+            7: { name: '溶岩', symbol: '🌋', color: '#ea580c', level: 2 }, 
+            8: { name: '生命', symbol: '🌱', color: '#4ade80', level: 2 }, 
+            
+            // 融合レベル3
+            9: { name: '石材', symbol: '🪨', color: '#94a3b8', level: 3 }, 
+            
+            // 融合レベル4
+            10: { name: '黄金', symbol: '💎', color: '#facc15', level: 4 }, 
+
+            // 最上位 賢者の石
+            11: { name: '賢者の石', symbol: '👑', color: '#ec4899', level: 5 } 
+        };
+
+        // レシピ判定関数
+        function getFusionResult(id1, id2) {
+            const pair = [id1, id2].sort((a,b)=>a-b);
+            const key = pair.join('+');
+            const recipes = {
+                '1+2': 6,  // 水 + 火 = 蒸気
+                '2+3': 7,  // 火 + 土 = 溶岩
+                '1+3': 8,  // 水 + 土 = 生命
+                '4+7': 9,  // 空気 + 溶岩 = 石材
+                '8+9': 10, // 生命 + 石材 = 黄金
+                '5+10': 11 // 魔法 + 黄金 = 賢者の石
+            };
+            return recipes[key] || null;
+        }
+
+        // --- ボード設定 ---
+        const COLS = 6;
+        const ROWS = 7;
+        const BLOCK_SIZE = 50;
+
+        const canvas = document.getElementById('alchCanvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = COLS * BLOCK_SIZE;
+        canvas.height = ROWS * BLOCK_SIZE;
+
+        let board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+        
+        let score = 0;
+        let level = 1;
+        let combo = 0;
+        let feverGrip = 0; 
+        let isFever = false;
+        let gameOver = false;
+        let discoveredElements = new Set([1, 2, 3, 4, 5]); 
+        let bestDiscovered = 8; 
+
+        let currentElement = null;
+        let nextElementId = 1;
+
+        // --- ランダム生成 ---
+        function selectNextElement() {
+            return Math.floor(Math.random() * 5) + 1;
+        }
+
+        function createCurrentElement(id) {
+            return {
+                id: id,
+                col: Math.floor(COLS / 2),
+                row: 0
+            };
+        }
+
+        // --- エフェクトパーティクル ---
+        function spawnParticles(x, y, color) {
+            const container = document.getElementById('particleContainer');
+            const rect = canvas.getBoundingClientRect();
+            const canvasX = rect.left + window.scrollX + x;
+            const canvasY = rect.top + window.scrollY + y;
+
+            for (let i = 0; i < 12; i++) {
+                const el = document.createElement('div');
+                el.className = 'particle';
+                el.style.backgroundColor = color;
+                el.style.width = `${Math.random() * 8 + 4}px`;
+                el.style.height = el.style.width;
+                el.style.left = `${canvasX}px`;
+                el.style.top = `${canvasY}px`;
+                
+                const angle = Math.random() * Math.PI * 2;
+                const speed = Math.random() * 80 + 30;
+                el.style.setProperty('--x', `${Math.cos(angle) * speed}px`);
+                el.style.transform = `translate(${Math.cos(angle) * speed}px, ${Math.sin(angle) * speed}px)`;
+                
+                container.appendChild(el);
+                setTimeout(() => el.remove(), 800);
+            }
+        }
+
+        // --- 描画関数 ---
+        function drawBoard() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 背景ルーンサークル
+            ctx.strokeStyle = 'rgba(168, 85, 247, 0.06)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(canvas.width/2, canvas.height/2, Math.min(canvas.width, canvas.height)/2.8, 0, Math.PI*2);
+            ctx.stroke();
+
+            // ガイドライン
+            ctx.strokeStyle = 'rgba(147, 51, 234, 0.15)';
+            ctx.lineWidth = 1;
+            for (let c = 1; c < COLS; c++) {
+                ctx.beginPath();
+                ctx.moveTo(c * BLOCK_SIZE, 0);
+                ctx.lineTo(c * BLOCK_SIZE, canvas.height);
+                ctx.stroke();
+            }
+
+            // 固定済み元素
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const elId = board[r][c];
+                    if (elId > 0) {
+                        drawElementIcon(c, r, elId);
+                    }
+                }
+            }
+
+            // 落下中の元素
+            if (currentElement && !gameOver) {
+                ctx.fillStyle = 'rgba(168, 85, 247, 0.04)';
+                ctx.fillRect(currentElement.col * BLOCK_SIZE, 0, BLOCK_SIZE, canvas.height);
+
+                drawElementIcon(currentElement.col, currentElement.row, currentElement.id);
+            }
+        }
+
+        function drawElementIcon(c, r, id) {
+            const data = ELEMENTS[id];
+            if (!data) return;
+
+            const x = c * BLOCK_SIZE;
+            const y = r * BLOCK_SIZE;
+            const size = BLOCK_SIZE - 6;
+
+            ctx.save();
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = data.color;
+
+            ctx.beginPath();
+            ctx.arc(x + BLOCK_SIZE/2, y + BLOCK_SIZE/2, size/2, 0, Math.PI*2);
+            ctx.fillStyle = 'rgba(10, 6, 22, 0.85)';
+            ctx.fill();
+            ctx.strokeStyle = data.color;
+            ctx.lineWidth = isFever ? 3.5 : 2;
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(x + BLOCK_SIZE/2, y + BLOCK_SIZE/2, size/3, 0, Math.PI*2);
+            ctx.stroke();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = `${size * 0.55}px 'Noto Sans JP'`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(data.symbol, x + BLOCK_SIZE/2, y + BLOCK_SIZE/2 + 2);
+        }
+
+        // --- 落下処理 ---
+        function dropCurrent() {
+            if (!currentElement || gameOver) return;
+
+            let targetRow = currentElement.row;
+            while (targetRow + 1 < ROWS && board[targetRow + 1][currentElement.col] === 0) {
+                targetRow++;
+            }
+
+            sfx.playDrop();
+            board[targetRow][currentElement.col] = currentElement.id;
+            
+            const dropX = currentElement.col * BLOCK_SIZE + BLOCK_SIZE/2;
+            const dropY = targetRow * BLOCK_SIZE + BLOCK_SIZE/2;
+            spawnParticles(dropX, dropY, ELEMENTS[currentElement.id].color);
+
+            processChainFusions();
+        }
+
+        // --- 連鎖融合コアエンジン ---
+        function processChainFusions() {
+            let changed = false;
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const currentId = board[r][c];
+                    if (currentId === 0) continue;
+
+                    // 右隣との比較
+                    if (c + 1 < COLS && board[r][c+1] !== 0) {
+                        const neighborId = board[r][c+1];
+                        const resultId = getFusionResult(currentId, neighborId);
+
+                        if (resultId) {
+                            fuseElements(c, r, c+1, r, resultId);
+                            changed = true;
+                            break;
+                        } else if (currentId === neighborId && currentId === 11) {
+                            triggerPhilosopherExplosion(c, r, c+1, r);
+                            changed = true;
+                            break;
+                        }
+                    }
+
+                    // 下側との比較
+                    if (r + 1 < ROWS && board[r+1][c] !== 0) {
+                        const neighborId = board[r+1][c];
+                        const resultId = getFusionResult(currentId, neighborId);
+
+                        if (resultId) {
+                            fuseElements(c, r, c, r+1, resultId);
+                            changed = true;
+                            break;
+                        } else if (currentId === neighborId && currentId === 11) {
+                            triggerPhilosopherExplosion(c, r, c, r+1);
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+                if (changed) break;
+            }
+
+            if (changed) {
+                applyGravity();
+                
+                combo++;
+                feverGrip = Math.min(100, feverGrip + (15 * combo));
+                if (feverGrip >= 100 && !isFever) {
+                    triggerFeverMode();
+                }
+
+                score += (100 * combo) * (isFever ? 2 : 1) * level;
+                updateStatsUI();
+
+                setTimeout(() => {
+                    drawBoard();
+                    processChainFusions();
+                }, 180);
+            } else {
+                combo = 0;
+                feverGrip = Math.max(0, feverGrip - 4); 
+                updateStatsUI();
+                
+                prepareNextTurn();
+            }
+        }
+
+        function fuseElements(c1, r1, c2, r2, resultId) {
+            const fuseColor = ELEMENTS[resultId].color;
+            const centerX = ((c1 + c2) / 2) * BLOCK_SIZE + BLOCK_SIZE/2;
+            const centerY = ((r1 + r2) / 2) * BLOCK_SIZE + BLOCK_SIZE/2;
+
+            spawnParticles(centerX, centerY, fuseColor);
+            sfx.playFuse(ELEMENTS[resultId].level);
+
+            board[r1][c1] = 0;
+            board[r2][c2] = resultId;
+
+            discoveredElements.add(resultId);
+            if (resultId > bestDiscovered) {
+                bestDiscovered = resultId;
+                updateBestComboBadge(resultId);
+            }
+        }
+
+        // 賢者の石の融合爆발
+        function triggerPhilosopherExplosion(c1, r1, c2, r2) {
+            board[r1][c1] = 0;
+            board[r2][c2] = 0;
+
+            sfx.playTone(880, 'sawtooth', 0.6, 0.4);
+            sfx.playTone(1320, 'sine', 0.8, 0.2);
+
+            const targetCols = [c1-1, c1, c1+1, c2-1, c2, c2+1];
+            const targetRows = [r1-1, r1, r1+1, r2-1, r2, r2+1];
+
+            targetRows.forEach(r => {
+                targetCols.forEach(c => {
+                    if (r >= 0 && r < ROWS && c >= 0 && c < COLS) {
+                        if (board[r][c] !== 0) {
+                            const px = c * BLOCK_SIZE + BLOCK_SIZE/2;
+                            const py = r * BLOCK_SIZE + BLOCK_SIZE/2;
+                            spawnParticles(px, py, '#ec4899');
+                            board[r][c] = 0;
+                            score += 500;
+                        }
+                    }
+                });
+            });
+
+            score += 5000; 
+            updateStatsUI();
+        }
+
+        function applyGravity() {
+            for (let c = 0; c < COLS; c++) {
+                let emptyRow = -1;
+                for (let r = ROWS - 1; r >= 0; r--) {
+                    if (board[r][c] === 0) {
+                        if (emptyRow === -1) emptyRow = r;
+                    } else if (emptyRow !== -1) {
+                        board[emptyRow][c] = board[r][c];
+                        board[r][c] = 0;
+                        emptyRow--;
+                    }
+                }
+            }
+        }
+
+        // --- フィーバーモード ---
+        function triggerFeverMode() {
+            isFever = true;
+            sfx.playFever();
+            document.getElementById('boardContainer').classList.add('fever-glow');
+            setTimeout(() => {
+                isFever = false;
+                feverGrip = 0;
+                document.getElementById('boardContainer').classList.remove('fever-glow');
+                updateStatsUI();
+            }, 8000); 
+        }
+
+        // --- 次のターン準備 ---
+        function prepareNextTurn() {
+            if (board[0][Math.floor(COLS/2)] !== 0) {
+                endGame();
+                return;
+            }
+
+            currentElement = createCurrentElement(nextElementId);
+            nextElementId = selectNextElement();
+            updateNextPreview();
+            drawBoard();
+        }
+
+        // --- UI更新 ---
+        function updateStatsUI() {
+            document.getElementById('scoreVal').innerText = score;
+            document.getElementById('comboVal').innerText = combo;
+            document.getElementById('feverBar').style.width = `${feverGrip}%`;
+
+            level = Math.floor(score / 5000) + 1;
+            document.getElementById('levelVal').innerText = level;
+        }
+
+        function updateNextPreview() {
+            const nextEl = ELEMENTS[nextElementId];
+            if (nextEl) {
+                const box = document.getElementById('nextElementBox');
+                box.innerHTML = nextEl.symbol;
+                box.style.borderColor = nextEl.color;
+                document.getElementById('nextElementName').innerText = nextEl.name;
+            }
+        }
+
+        function updateBestComboBadge(id) {
+            const el = ELEMENTS[id];
+            if (el) {
+                document.getElementById('bestComboIcon').innerHTML = el.symbol;
+                document.getElementById('bestComboIcon').style.borderColor = el.color;
+                document.getElementById('bestComboName').innerText = el.name;
+            }
+        }
+
+        // --- ゲーム管理 ---
+        function startGame() {
+            board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+            score = 0;
+            combo = 0;
+            feverGrip = 0;
+            isFever = false;
+            gameOver = false;
+            discoveredElements = new Set([1,2,3,4,5]);
+            bestDiscovered = 5;
+
+            updateBestComboBadge(8);
+            updateStatsUI();
+
+            nextElementId = selectNextElement();
+            currentElement = createCurrentElement(selectNextElement());
+            updateNextPreview();
+
+            document.getElementById('screenOverlay').classList.add('opacity-0', 'pointer-events-none');
+            sfx.init();
+            drawBoard();
+        }
+
+        function endGame() {
+            gameOver = true;
+            sfx.playGameOver();
+
+            document.getElementById('overlayTitle').innerText = '錬金術の失敗';
+            document.getElementById('overlayDesc').innerText = 'グリッドが混沌のエネルギーで満たされ、大爆発してしまいました！';
+            document.getElementById('finalScore').innerText = score;
+            document.getElementById('discoveredCount').innerText = `合成した特殊元素の種類: ${discoveredElements.size}種`;
+            document.getElementById('scoreDisplay').classList.remove('hidden');
+            document.getElementById('startBtn').innerText = 'RE-TRANSMUTE';
+
+            document.getElementById('screenOverlay').classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        // --- コントロール処理 ---
+        function moveLeft() {
+            if (!currentElement || gameOver) return;
+            if (currentElement.col > 0 && board[currentElement.row][currentElement.col - 1] === 0) {
+                currentElement.col--;
+                sfx.playMove();
+                drawBoard();
+            }
+        }
+
+        function moveRight() {
+            if (!currentElement || gameOver) return;
+            if (currentElement.col < COLS - 1 && board[currentElement.row][currentElement.col + 1] === 0) {
+                currentElement.col++;
+                sfx.playMove();
+                drawBoard();
+            }
+        }
+
+        // キーボードショートカット
+        window.addEventListener('keydown', (e) => {
+            if (gameOver) return;
+            if (e.code === 'ArrowLeft') {
+                moveLeft();
+                e.preventDefault();
+            } else if (e.code === 'ArrowRight') {
+                moveRight();
+                e.preventDefault();
+            } else if (e.code === 'Space' || e.code === 'ArrowDown') {
+                dropCurrent();
+                e.preventDefault();
+            }
+        });
+
+        // モバイルタッチパッド
+        document.getElementById('ctrlLeft').addEventListener('pointerdown', (e) => { e.preventDefault(); moveLeft(); });
+        document.getElementById('ctrlRight').addEventListener('pointerdown', (e) => { e.preventDefault(); moveRight(); });
+        document.getElementById('ctrlDrop').addEventListener('pointerdown', (e) => { e.preventDefault(); dropCurrent(); });
+
+        // ヘルプモーダル
+        const helpModal = document.getElementById('helpModal');
+        document.getElementById('helpBtn').addEventListener('click', () => {
+            helpModal.classList.remove('hidden');
+        });
+        document.getElementById('closeHelpBtn').addEventListener('click', () => {
+            helpModal.classList.add('hidden');
+        });
+
+        // サ운드 토글
+        document.getElementById('soundBtn').addEventListener('click', () => {
+            sfx.muted = !sfx.muted;
+            const icon = document.getElementById('soundIcon');
+            if (sfx.muted) {
+                icon.className = 'fas fa-volume-mute text-rose-500';
+            } else {
+                icon.className = 'fas fa-volume-up text-purple-400';
+                sfx.init();
+            }
+        });
+
+        // 開始ボタン
+        document.getElementById('startBtn').addEventListener('click', () => {
+            startGame();
+        });
+
+        window.onload = () => {
+            drawBoard();
+        };
+    </script>
+</body>
+</html>
